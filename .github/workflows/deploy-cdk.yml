@@ -1,0 +1,43 @@
+name: Deploy CDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command'
+        required: true
+        default: 'synthesize'
+        type: choice
+        options:
+          - bootstrap
+          - list
+          - synthesize
+          - diff
+          - deploy
+          - destroy
+
+env:
+  AWS_REGION: ap-northeast-1
+  ENVIRONMENT: dev
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    env:
+      COMAND: ${{ github.event.inputs.command }}
+      STACK: ""
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Deploy
+      uses: ./.github/workflows/actions/deploy-cdk
+      with:
+        environment: ${{ env.ENVIRONMENT }}
+        command: ${{ github.event.inputs.command }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}

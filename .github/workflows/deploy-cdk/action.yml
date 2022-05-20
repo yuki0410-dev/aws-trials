@@ -1,0 +1,64 @@
+name: Deploy CDK
+description: Deploy CDK
+
+inputs:
+  environment:
+    description: 'Environment'
+    required: true
+    default: 'dev'
+  command:
+    description: 'Command'
+    required: true
+    default: 'synthesize'
+  aws-access-key-id:
+    description: 'AWS Secret Access ID'
+    required: true
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key'
+    required: true
+  aws-region:
+    description: 'AWS Region'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+  - name: Set env
+    shell: sh
+    run: |
+      echo ENVIRONMENT=$ENVIRONMENT >> $GITHUB_ENV
+      echo COMAND=$COMAND >> $GITHUB_ENV
+      echo STACK=$STACK >> $GITHUB_ENV
+      echo QUALIFIER=demo-$ENVIRONMENT >> $GITHUB_ENV
+      if [ "$ENVIRONMENT" = "prod" ]; then
+        echo TOOLKIT_STAKC_NAME=CDKToolkit-Demo-Prod >> $GITHUB_ENV
+      else
+        echo TOOLKIT_STAKC_NAME=CDKToolkit-Demo-Dev >> $GITHUB_ENV
+      fi
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      COMAND: ${{ inputs.command }}
+      STACK: ""
+
+  - name: Set up
+    uses: ./.github/workflows/actions/set-up
+
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ inputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+      aws-region: ${{ inputs.aws-region }}
+
+  - name: CDK
+    shell: sh
+    run: |
+      npm run cdk -w packages/infrastructure -- \
+        ${{ env.COMAND }} \
+        ${{ env.STACK }} \
+        --toolkit-stack-name=${{ env.TOOLKIT_STAKC_NAME }} \
+        --qualifier=${{ env.QUALIFIER }} \
+        --context environment=${{ env.ENVIRONMENT }} \
+        --context @aws-cdk/core:bootstrapQualifier=${{ env.QUALIFIER }} \
+        --require-approval never \
+        --force

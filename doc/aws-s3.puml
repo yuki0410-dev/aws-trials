@@ -1,0 +1,50 @@
+@startuml s3-architecture
+' docker run -p 8080:8080 plantuml/plantuml-server:jetty
+' https://Github.com/awslabs/aws-icons-for-plantuml/blob/main/AWSSymbols.md
+
+title S3 Architecture
+
+!define ICONURL https://raw.GithubUsercontent.com/tupadr3/plantuml-icon-font-sprites/v2.4.0
+
+!include <awslib/AWSCommon>
+' !include <awslib/AWSSimplified>
+!include <awslib/General/Client>
+!include <awslib/General/Traditionalserver>
+!include <awslib/General/Toolkit>
+!include <awslib/GroupIcons/Cloud>
+!include <awslib/NetworkingContentDelivery/Route53>
+!include <awslib/SecurityIdentityCompliance/CertificateManager>
+!include <awslib/NetworkingContentDelivery/CloudFront.puml>
+!include <awslib/SecurityIdentityCompliance/Cognito>
+!include <awslib/ApplicationIntegration/APIGateway>
+!include <awslib/Compute/LambdaLambdaFunction>
+!include <awslib/Database/DynamoDB.puml>
+!include <awslib/Storage/SimpleStorageService.puml>
+!include <awslib/ApplicationIntegration/EventBridge.puml>
+!include <awslib/ApplicationIntegration/SimpleQueueService.puml>
+
+!include ICONURL/common.puml
+
+Client(User, "User", "User Client")
+
+Cloud(Cloud, "AWS Cloud", ) {
+  together {
+    Route53(Route53, "Route 53", )
+
+    CertificateManager(AMC, "ACM", )
+  }
+
+  together {
+    CloudFront(PublicCloudFront, "CloudFront", "PublicFrontCf")
+
+    SimpleStorageService(PublicFrontS3, "S3", "PublicFrontS3")
+  }
+}
+
+User -r-> PublicCloudFront: https
+  PublicCloudFront -r-> PublicFrontS3
+' Layout
+
+Route53 -[hidden]r- AMC
+
+@enduml
